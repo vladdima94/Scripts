@@ -1,46 +1,51 @@
 #!/bin/bash
 
-echo 'Installing Java SDK'
+echo '[START]Installing Java SDK'
 yes Y | apt-get update
 yes Y | apt-get install default-jdk
+echo '[END]Installed Java SDK'
 
-echo 'Installing curl'
+echo '[START]Installing curl'
 yes Y | apt-get install curl
+echo '[END]Installed curl'
+
+echo '[START]Installing git'
+yes Y | apt-get install git
+echo '[END]Installed git'
 
 
-echo 'Creating groupuser tomcat and user tomcat for Apache Tomcat server server'
+echo '[START]Creating groupuser tomcat and user tomcat for Apache Tomcat server server'
 
 tomcat_user='tomcat'
 user_exists=$(id -u $tomcat_user > /dev/null 2>&1; echo $?) 
 group_exists=$(id -g $tomcat_user > /dev/null 2>&1; echo $?)
 
 if [ $group_exists == 1 ]; then
- echo 'Creating tomcat usergroup'
+ echo '[RUNNING]Creating tomcat usergroup'
  groupadd $tomcat_user
- echo 'Succesfully created tomcat usergroup'
+ echo '[RUNNING]Succesfully created tomcat usergroup'
 else
- echo 'tomcat usergroup already exists'
+ echo '[RUNNING]Tomcat usergroup already exists'
 fi
 
 if [ $user_exists == 1 ]; then
- echo 'Creating tomcat user'
+ echo '[RUNNING]Creating tomcat user'
  useradd -s /bin/false -g $tomcat_user -d '/opt/$tomcat' $tomcat_user
- echo 'Succesfully created tomcat user'
+ echo '[RUNNING]Succesfully created tomcat user'
 else
- echo 'tomcat user already exists'
+ echo '[RUNNING]Tomcat user already exists'
 fi
 
 
-echo 'Installing tomcat'
-
+echo '[START]Installing Apache Tomcat'
 cd /tmp
 wget $1
 sudo mkdir /opt/tomcat
 sudo tar -xzvf $2 -C /opt/tomcat --strip-components=1
+echo '[END]Installing Apache Tomcat'
 
 
-
-echo 'Setting permissions'
+echo '[START]Setting permissions'
 
 #Give the tomcat group ownership over the entire installation directory
 cd /opt/tomcat
@@ -53,7 +58,9 @@ chmod g+x conf
 #Make the tomcat user the owner of the webapps, work, temp, and logs directories
 chown -R tomcat webapps/ work/ temp/ logs/
 
+echo '[END]Permissions were set'
 
+echo '[START]Configuring Tomcat Service Content file'
 java_path_temp=$(sudo update-java-alternatives -l)
 for word in $java_path_temp
 do
@@ -90,10 +97,10 @@ Restart=always\r\n
 WantedBy=multi-user.target"
 echo -e $tomcat_service_content > /etc/systemd/system/tomcat.service
 
+echo '[END]Configured Tomcat Service Content file'
+
 #Reload systemd daemon
 sudo systemctl daemon-reload
-
-echo 'Done installing Apache Tomcat'
 
 #start server 
 # sudo systemctl start tomcat
